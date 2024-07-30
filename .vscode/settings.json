@@ -1,0 +1,15 @@
+{
+    "remote.portsAttributes": {
+        "3000": {
+            "protocol": "http",
+            "label": "Server",
+            "onAutoForward": "notify"
+        },
+        "443": {
+            "protocol": "https"
+        },
+        "8443": {
+            "protocol": "https"
+        }
+    }
+}
