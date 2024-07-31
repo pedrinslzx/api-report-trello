@@ -1,4 +1,4 @@
-export interface TrelloItem {
+export interface TrelloItemCard {
   name: string;
   link: string;
   members: string[];
@@ -6,15 +6,24 @@ export interface TrelloItem {
   due: false | Date;
   created: Date;
   category: string | "";
-  amount: number | 'none';
+  amount: number | "none";
 }
+
+export interface TrelloItemSeparator {
+  name: string;
+  category: "Separador";
+}
+
+export type TrelloItem = TrelloItemCard | TrelloItemSeparator;
 
 export function parseTrello(input: string) {
   const trelloItems: TrelloItem[] = [];
   const lines = input.trim().split("\n");
 
   for (const line of lines) {
-    if (line.trim() === "" || line.includes("____________")) {
+    let trelloItem = null as (typeof trelloItems)[number];
+
+    if (line.trim() === "") {
       continue;
     }
 
@@ -31,19 +40,24 @@ export function parseTrello(input: string) {
             s
               .trim()
               .split("=")
-              .map((s) => s.trim()) as [keyof TrelloItem, string],
+              .map((s) => s.trim()) as [keyof TrelloItemCard, string],
         )
         .reduce(
-          (obj, [key, item]) => ({ ...obj, [key]: item.substring(1, item.length - 1) }),
-          {} as Record<keyof TrelloItem, string>,
+          (obj, [key, item]) => ({
+            ...obj,
+            [key]: item.substring(1, item.length - 1),
+          }),
+          {} as Record<keyof TrelloItemCard, string>,
         );
 
-      const members = entries.members.split(",").map((m) => m.trim().replace(/"/g, ""));
+      const members = entries.members
+        .split(",")
+        .map((m) => m.trim().replace(/"/g, ""));
       const labels = entries.labels
         .split(",")
         .map((l) => l.trim().replace(/"/g, ""));
 
-      const trelloItem: TrelloItem = {
+      trelloItem = {
         name: entries.name.replace(/\\"/g, '"'),
         link: entries.link.replace(/\\"/g, '"'),
         members,
@@ -55,8 +69,6 @@ export function parseTrello(input: string) {
           ? Number(entries.amount.replace(/\\"/g, '"'))
           : 0,
       };
-
-      trelloItems.push(trelloItem);
 
       // throw new Error(`Formato inválido na linha: ${line}`);
     } else {
@@ -76,7 +88,7 @@ export function parseTrello(input: string) {
         .split(",")
         .map((l) => l.trim().replace(/"/g, ""));
 
-      const trelloItem: TrelloItem = {
+      trelloItem = {
         name: name.replace(/\\"/g, '"'),
         link: link.replace(/\\"/g, '"'),
         members,
@@ -84,9 +96,19 @@ export function parseTrello(input: string) {
         due: dueStr !== "false" ? new Date(dueStr) : false,
         created: new Date(created.replace(/\\"/g, '"')),
         category: category ? category.replace(/\\"/g, '"') : "",
-        amount: amount ? Number(amount.replace(/\\"/g, '"')) : 'none',
+        amount: amount ? Number(amount.replace(/\\"/g, '"')) : "none",
       };
+    }
 
+    if (
+      trelloItem.labels.find((a) => a.toLowerCase().includes("separador")) ||
+      trelloItem.name.includes("__")
+    ) {
+      trelloItems.push({
+        name: trelloItem.name.replace(/_/g, ""),
+        category: "Separador",
+      });
+    } else {
       trelloItems.push(trelloItem);
     }
   }

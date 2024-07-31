@@ -1,41 +1,69 @@
-import CATEGORY_POINTS, { CATEGORIES_WITH_DEFAULT_AMOUNT, CATEGORY_NAMES } from "./ranking";
-import { TrelloItem } from "./trello";
-import { generateContractRanking, toTitleCase } from "./utils";
+import CATEGORY_POINTS, {
+  CATEGORIES_WITH_DEFAULT_AMOUNT,
+  CATEGORY_NAMES,
+} from "./ranking";
+import { TrelloItem, TrelloItemCard } from "./trello";
+import {
+  aggregateContractCategories,
+  sortCardsPerContracts,
+  toTitleCase,
+} from "./utils";
 
-export interface ReportItem {
-  card: TrelloItem
-  category: CATEGORY_NAMES
-  points: number
+export type ReportItem = ReportItemCard | ReportItemSeparador;
+
+export interface ReportItemCard {
+  card: TrelloItem;
+  category: CATEGORY_NAMES;
+  points: number;
+}
+
+export interface ReportItemSeparador {
+  card: TrelloItem;
+  category: "Separador";
 }
 
 export function calculeReport(cards: TrelloItem[]): ReportItem[] {
-  return cards.map(card => {
-    const findedCategory = CATEGORY_NAMES.find((c) => c === card.category)
+  return cards.map((card) => {
+    const findResultCategory = CATEGORY_NAMES.find((c) => c === card.category);
 
-    if (!findedCategory) return {
-      card,
-      category: 'Sem categoria',
-      points: 0
+    if (!findResultCategory)
+      return {
+        card,
+        category: "Sem categoria",
+        points: 0,
+      };
+
+    if (findResultCategory === "Separador") {
+      return {
+        card,
+        category: "Separador",
+      };
     }
 
-    const amount = CATEGORIES_WITH_DEFAULT_AMOUNT.includes(findedCategory as CATEGORY_NAMES) ? 1 : card.amount !== 'none' ? card.amount : 0
+    const amount = CATEGORIES_WITH_DEFAULT_AMOUNT.includes(
+      findResultCategory as CATEGORY_NAMES,
+    )
+      ? 1
+      : (card as TrelloItemCard).amount !== "none"
+        ? ((card as TrelloItemCard).amount as number)
+        : 0;
 
     return {
       card,
-      category: findedCategory as CATEGORY_NAMES,
-      points: CATEGORY_POINTS[findedCategory]?.point * amount
-    }
-  })
+      category: findResultCategory as CATEGORY_NAMES,
+      points: CATEGORY_POINTS[findResultCategory]?.point * amount,
+    };
+  });
 }
 
 export function generateReport(data: Record<string, ReportItem[]>): string {
   let report = "";
 
-  const contratos = {} as Record<string, Record<string, number>>
+  const contratos = {} as Record<string, Record<string, string[]>>;
 
   for (const person in data) {
     report += `## ${toTitleCase(person)}\n\n`;
-    let tableReport = '<div class="overview">\n\n';
+    let tableReport = '<div class="person-overview">\n\n';
     tableReport += "| Nome | Categoria | Pontos |\n";
     tableReport += "|---|---|---|\n";
 
@@ -43,26 +71,34 @@ export function generateReport(data: Record<string, ReportItem[]>): string {
     const categoryCounts: { [category: string]: number } = {};
 
     for (const item of data[person]) {
+      if (item.category === "Separador") {
+        tableReport += `| <b>${item.card.name}</b> | - | - |\n`;
+        continue;
+      }
+
       const { card, points } = item;
       tableReport += `| ${card.name} | ${card.category} | ${points} |\n`;
       totalPoints += points;
       categoryCounts[card.category] = (categoryCounts[card.category] || 0) + 1;
 
-
-      const contratoNumber = card.name.split('-')[0].trim()
+      const contratoNumber = card.name.split("-")[0].trim();
 
       if (contratoNumber) {
-        contratos[person] = contratos[person] ?? {}
-        contratos[person][String(contratoNumber)] = (contratos[person][String(contratoNumber)] || 0) + 1
+        contratos[person] = contratos[person] ?? {};
+        contratos[person][String(contratoNumber)] = [
+          ...(contratos[person][String(contratoNumber)] || []),
+          card.category,
+        ];
       }
     }
 
-    const averagePoints = totalPoints / data[person].length;
-    const mostFrequentCategory = Object.keys(categoryCounts).reduce((a, b) => categoryCounts[a] > categoryCounts[b] ? a : b);
+    const mostFrequentCategory = Object.keys(categoryCounts).reduce((a, b) =>
+      categoryCounts[a] > categoryCounts[b] ? a : b,
+    );
 
     tableReport += "\n\n</div>\n\n";
+    report += `- **Total de cards/demandas:** ${data[person].filter((a) => a.category !== "Separador").length}\n`;
     report += `- **Total de pontos:** ${totalPoints}\n`;
-    report += `- **Média de pontos:** ${averagePoints.toFixed(2)}\n`;
     report += `- **Categoria mais frequente:** ${mostFrequentCategory}\n\n`;
 
     report += tableReport;
@@ -72,35 +108,63 @@ export function generateReport(data: Record<string, ReportItem[]>): string {
   report += "## Visão Geral\n\n";
   // ... (cálculo de estatísticas gerais)
 
-
-  const sortedContracts = generateContractRanking(contratos)
+  const sortedCardsPerContracts = sortCardsPerContracts(contratos);
 
   // 3. Gerar o relatório Markdown
   report += "### Número de Cards/Demandas por contrato\n\n";
+  report += '\n\n<div class="report-overview cards-per-contract">\n\n';
   report += "| Contrato | Quantidade |\n";
   report += "|---|---|\n";
 
-  sortedContracts.map(([contract, count]) => {
+  sortedCardsPerContracts.map(([contract, count]) => {
     report += `| ${contract} | ${count} |\n`;
-  })
+  });
+
+  report += "\n\n</div>\n\n";
+
+  const sortedCategoriesPerContracts = aggregateContractCategories(contratos);
+
+  // 3. Gerar o relatório Markdown
+  report += "### Número de Categorias por contrato\n\n";
+  report += '\n\n<div class="report-overview categories-per-contract">\n\n';
+
+  Object.entries(sortedCategoriesPerContracts).map(([contract, categories]) => {
+    report += "#### " + contract + "\n\n";
+    report += "| Categoria | Quantidade |\n";
+    report += "|---|---|\n";
+
+    Object.entries(categories).map(([categories, count]) => {
+      report += `| ${categories} | ${count} |\n`;
+    });
+    report += "\n\n";
+  });
+
+  report += "\n\n</div>\n\n";
 
   report += "\n\n";
 
   report += "## Legenda\n\n";
+  report += '\n\n<div class="legenda">\n\n';
   report += "| Categoria | Pontos |  |\n";
   report += "|---|---|---|\n";
 
-  Object.entries(CATEGORY_POINTS).filter(([, { point }]) => point !== 0).map(([category, data]) => {
-    report += `|${category}|${data.point}|${data.obs}|\n`
-  })
+  Object.entries(CATEGORY_POINTS)
+    .filter(([, { point }]) => point !== 0 || point < 0)
+    .map(([category, data]) => {
+      report += `|${category}|${data.point}|${data.obs}|\n`;
+    });
+
+  report += "\n\n</div>\n\n";
 
   return report;
 }
 
-export function generateCleanReport(data: Record<string, ReportItem[]>): string {
+export function generateCleanReport(
+  data: Record<string, ReportItem[]>,
+): string {
   let report = "";
 
-  const contratos = {} as Record<string, Record<string, number>>
+  const contratos = {} as Record<string, Record<string, number>>;
 
   for (const person in data) {
     report += `## ${toTitleCase(person)}\n\n`;
@@ -108,21 +172,25 @@ export function generateCleanReport(data: Record<string, ReportItem[]>): string 
     let tableReport = "| Nome | Categoria | Pontos |\n";
     tableReport += "|---|---|---|\n";
 
-    let totalPoints = 0;
+    // let totalPoints = 0;
     const categoryCounts: { [category: string]: number } = {};
 
     for (const item of data[person]) {
+      if (item.category === "Separador") {
+        tableReport += `| <b>${item.card.name}</b> | - | - |\n`;
+        continue;
+      }
       const { card, points } = item;
       tableReport += `| ${card.name} | ${card.category} | ${points} |\n`;
-      totalPoints += points;
+      // totalPoints += points;
       categoryCounts[card.category] = (categoryCounts[card.category] || 0) + 1;
 
-
-      const contratoNumber = card.name.split('-')[0].trim()
+      const contratoNumber = card.name.split("-")[0].trim();
 
       if (contratoNumber) {
-        contratos[person] = contratos[person] ?? {}
-        contratos[person][String(contratoNumber)] = (contratos[person][String(contratoNumber)] || 0) + 1
+        contratos[person] = contratos[person] ?? {};
+        contratos[person][String(contratoNumber)] =
+          (contratos[person][String(contratoNumber)] || 0) + 1;
       }
     }
 
@@ -134,12 +202,10 @@ export function generateCleanReport(data: Record<string, ReportItem[]>): string 
   return report;
 }
 
-
-
 export function generateReportMax(data: Record<string, ReportItem[]>): string {
   let report = "";
 
-  const contratos = {} as Record<string, Record<string, number>>
+  const contratos = {} as Record<string, Record<string, number>>;
 
   for (const person in data) {
     report += `## ${toTitleCase(person)}\n\n`;
@@ -147,21 +213,25 @@ export function generateReportMax(data: Record<string, ReportItem[]>): string {
     let tableReport = "| Nome | Categoria | Pontos |\n";
     tableReport += "|---|---|---|\n";
 
-    let totalPoints = 0;
+    // let totalPoints = 0;
     const categoryCounts: { [category: string]: number } = {};
 
     for (const item of data[person]) {
+      if (item.category === "Separador") {
+        tableReport += `| <b>${item.card.name}</b> | - | - |\n`;
+        continue;
+      }
       const { card, points } = item;
       tableReport += `| ${card.name} | ${card.category} | ${points} |\n`;
-      totalPoints += points;
+      // totalPoints += points;
       categoryCounts[card.category] = (categoryCounts[card.category] || 0) + 1;
 
-
-      const contratoNumber = card.name.split('-')[0].trim()
+      const contratoNumber = card.name.split("-")[0].trim();
 
       if (contratoNumber) {
-        contratos[person] = contratos[person] ?? {}
-        contratos[person][String(contratoNumber)] = (contratos[person][String(contratoNumber)] || 0) + 1
+        contratos[person] = contratos[person] ?? {};
+        contratos[person][String(contratoNumber)] =
+          (contratos[person][String(contratoNumber)] || 0) + 1;
       }
     }
 

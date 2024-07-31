@@ -1,11 +1,11 @@
-import express, { Request, Response } from "express";
 import bodyParser from "body-parser";
+import express, { Request, Response } from "express";
 import fs from "fs";
-import path from "path";
 import morgan from "morgan";
+import path from "path";
 
 import { mdToPdf } from "md-to-pdf";
-import { parseTrello, TrelloItem } from "./trello";
+import { htmlConfig as pdfConfig } from "./config/pdf";
 import {
   calculeReport,
   generateCleanReport,
@@ -13,7 +13,7 @@ import {
   generateReportMax,
   ReportItem,
 } from "./report";
-import { htmlConfig as pdfConfig } from "./config/pdf";
+import { parseTrello, TrelloItem } from "./trello";
 
 const app = express();
 
@@ -117,7 +117,7 @@ app.post("/", (req: Request, res: Response) => {
 // app.use((req, res, next) => {
 //   try {
 //     const file = fs.readFileSync(
-//       path.join(__dirname, "data", "data_1722425772751_2.json"),
+//       path.join(__dirname, "data", "data_1722436661195_2.json"),
 //       "utf-8",
 //     );
 //     const trelloItems = JSON.parse(file) as Record<string, TrelloItem[]>;
@@ -173,7 +173,7 @@ app.post("/", (req: Request, res: Response) => {
 
 app.get("/", (req, res) => {
   const file = fs.readFileSync(
-    path.join(__dirname, "data", "data_1722425772751_2.json"),
+    path.join(__dirname, "data", "data_1722436661195_2.json"),
     "utf-8",
   );
   const trelloItems = JSON.parse(file) as Record<string, TrelloItem[]>;
@@ -194,9 +194,7 @@ app.get("/", (req, res) => {
       //   ),
       //   reportPdf.content,
       // );
-      res.send(
-        reportPdf.content,
-      );
+      res.send(reportPdf.content);
     })
     .catch(() => res.send("Error"));
   // res.sendFile(

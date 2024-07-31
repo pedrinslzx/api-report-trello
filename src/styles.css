@@ -6,7 +6,12 @@ body {
   color: #333;
 }
 
-h1, h2, h3, h4, h5, h6 {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
   text-transform: uppercase;
   font-family: Poppins, "Arial", sans-serif;
   color: #663399; /* Roxo escuro para títulos */
@@ -17,8 +22,10 @@ table {
   width: 100%;
   border-collapse: collapse;
   margin-bottom: 1em;
+  border-radius: 8px;
 }
-table th, table td {
+table th,
+table td {
   border: 1px solid #ddd;
   padding: 6px 8px;
   text-align: left;
@@ -27,13 +34,52 @@ table th {
   background-color: #9966cc; /* Roxo claro para cabeçalho */
   color: white;
 }
+table tr:nth-child(even) {
+  background: hsl(270, 50%, 95%);
+}
+table tr:nth-child(even) {
+  background: rgb(255, 255, 255);
+}
 
-/* Estilos específicos para a tabela de legenda */
-#legenda ~ table {
+.person-overview table {
+  width: 100%;
+}
+.person-overview table tr th:nth-child(1),
+.person-overview table tr td:nth-child(1) {
+  width: 70%;
+}
+.person-overview table tr th:nth-child(2),
+.person-overview table tr td:nth-child(2) {
+  width: 20%;
+}
+.person-overview table tr th:nth-child(3),
+.person-overview table tr td:nth-child(3) {
+  width: 10%;
+}
+
+.report-overview table {
+  width: 50%;
+}
+.report-overview.cards-per-contract table, .report-overview.categories-per-contract table {
+  width: 45%;
+}
+.report-overview.cards-per-contract table tr th:nth-child(1),
+.report-overview.cards-per-contract table tr td:nth-child(1), .report-overview.categories-per-contract table tr th:nth-child(1),
+.report-overview.categories-per-contract table tr td:nth-child(1) {
+  width: 70%;
+}
+.report-overview.cards-per-contract table tr th:nth-child(2),
+.report-overview.cards-per-contract table tr td:nth-child(2), .report-overview.categories-per-contract table tr th:nth-child(2),
+.report-overview.categories-per-contract table tr td:nth-child(2) {
+  width: 30%;
+}
+
+.legenda table {
   font-size: 0.85em; /* Diminui o tamanho da fonte */
   font-weight: 500;
   width: initial;
 }
-#legenda ~ table th, #legenda ~ table td {
+.legenda table th,
+.legenda table td {
   padding: 2px 4px; /* Diminui o espaçamento interno */
 }/*# sourceMappingURL=styles.css.map */
