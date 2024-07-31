@@ -35,8 +35,8 @@ export function generateReport(data: Record<string, ReportItem[]>): string {
 
   for (const person in data) {
     report += `## ${toTitleCase(person)}\n\n`;
-
-    let tableReport = "| Nome | Categoria | Pontos |\n";
+    let tableReport = '<div class="overview">\n\n';
+    tableReport += "| Nome | Categoria | Pontos |\n";
     tableReport += "|---|---|---|\n";
 
     let totalPoints = 0;
@@ -60,7 +60,7 @@ export function generateReport(data: Record<string, ReportItem[]>): string {
     const averagePoints = totalPoints / data[person].length;
     const mostFrequentCategory = Object.keys(categoryCounts).reduce((a, b) => categoryCounts[a] > categoryCounts[b] ? a : b);
 
-    tableReport += "\n";
+    tableReport += "\n\n</div>\n\n";
     report += `- **Total de pontos:** ${totalPoints}\n`;
     report += `- **Média de pontos:** ${averagePoints.toFixed(2)}\n`;
     report += `- **Categoria mais frequente:** ${mostFrequentCategory}\n\n`;
