@@ -8,9 +8,9 @@ import { notFound } from "next/navigation";
 export async function CompleteReport() {
   const [startData, cris, diego, pedro] = await Promise.all([
     kv.get<Record<string, ReportItem[]>>("data"),
-    await kv.get<ReportItem[]>("cris"),
-    await kv.get<ReportItem[]>("diego"),
-    await kv.get<ReportItem[]>("pedro"),
+    kv.get<ReportItem[]>("cris"),
+    kv.get<ReportItem[]>("diego"),
+    kv.get<ReportItem[]>("pedro"),
   ]);
 
   const data = startData ? startData : { cris: cris ?? [], diego: diego ?? [], pedro: pedro ?? [] }
