@@ -3,7 +3,6 @@ import { kv } from "@vercel/kv";
 
 import { generateReport } from "@/lib/markdown/default";
 import { marked } from "marked";
-import { notFound } from "next/navigation";
 
 export async function CompleteReport() {
   const [startData, cris, diego, pedro] = await Promise.all([
@@ -18,7 +17,7 @@ export async function CompleteReport() {
   console.log(data, { cris: cris ?? [], diego: diego ?? [], pedro: pedro ?? [] })
 
   if (!data) {
-    notFound();
+    return  <div>ERROR</div>
   }
 
   const report = generateReport(data);
