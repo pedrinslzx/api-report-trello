@@ -15,6 +15,8 @@ export async function CompleteReport() {
 
   const data = startData ? startData : { cris: cris ?? [], diego: diego ?? [], pedro: pedro ?? [] }
 
+  console.log(data, { cris: cris ?? [], diego: diego ?? [], pedro: pedro ?? [] })
+
   if (!data) {
     notFound();
   }
