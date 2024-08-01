@@ -1,5 +1,6 @@
 import { calculeReport, ReportItem } from "@/lib/report";
 import { parseTrello, TrelloItem } from "@/lib/trello";
+import { kv } from "@vercel/kv";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(req: NextRequest) {
@@ -19,6 +20,12 @@ export async function POST(req: NextRequest) {
         (l, n) => ({ ...l, [n[0]]: n[1] }),
         {} as Record<string, ReportItem[]>,
       );
+
+    await kv.set('data', reportItems)
+    await kv.set('person', Object.keys(reportItems))
+    await Promise.all(Object.keys(reportItems).map(person => kv.set(person, reportItems[person])))
+
+    return NextResponse.json({ message: 'Dados salvos' })
   } catch (e) {
     return NextResponse.json({ error: e })
   }
