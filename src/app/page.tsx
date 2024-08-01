@@ -19,6 +19,6 @@ export default async function Home() {
   const contentHtml = processedContent.toString();
   
   return (
-    <div dangerouslySetInnerHTML={{ __html: contentHtml }} />
+    <div className="container mx-auto px-4 sm:px-6 lg:px-8 my-8 print:my-0 shadow print:shadow-none bg-white" dangerouslySetInnerHTML={{ __html: contentHtml }} />
   );
 }
