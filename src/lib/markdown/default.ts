@@ -101,8 +101,6 @@ export function generateReport(data: Record<string, ReportItem[]>): string {
 
   const sortedCategories = aggregateCategories(contratos);
 
-  console.log(sortedCategories);
-
   const persons = Object.values(sortedCategories)
     .map((obj) => Object.keys(obj))
     .reduce(

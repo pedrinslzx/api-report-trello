@@ -92,8 +92,6 @@ export function aggregateOneCategory(
   ]) as [string, ReportItemCard[]][];
   // .reduce((l, c) => [...l, ...c], []) as [string, ReportItemCard][];
 
-  console.log(categoryAggregated);
-
   const personAggregate = categoryAggregated.reduce(
     (l, [person, cards]) => {
       l[person] = l[person] ?? 0;

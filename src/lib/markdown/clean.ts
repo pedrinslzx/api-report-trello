@@ -94,8 +94,6 @@ export function generateCleanReport(
 
   const sortedCategories = aggregateCategories(contratos);
 
-  console.log(sortedCategories);
-
   const persons = Object.values(sortedCategories)
     .map((obj) => Object.keys(obj))
     .reduce(
